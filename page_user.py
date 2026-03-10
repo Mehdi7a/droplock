@@ -17,13 +17,71 @@ def page_user():
         </div>
     """, unsafe_allow_html=True)
 
+    # CSS mobile-friendly
+    st.markdown("""
+    <style>
+        .locker-available {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            text-align: center;
+        }
+        .locker-available h3 {
+            color: #155724 !important;
+            font-size: 1.2rem !important;
+        }
+        .locker-available p {
+            color: #155724 !important;
+            font-size: 1rem !important;
+        }
+        .locker-reserved {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            text-align: center;
+            opacity: 0.85;
+        }
+        .locker-reserved h3 {
+            color: #721c24 !important;
+            font-size: 1.2rem !important;
+        }
+        .locker-reserved p {
+            color: #721c24 !important;
+            font-size: 1rem !important;
+        }
+        .booking-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin: 0.8rem 0;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            border-left: 5px solid #2196F3;
+        }
+        .booking-card b {
+            color: #1a1a2e !important;
+            font-size: 1rem !important;
+        }
+        .booking-card small {
+            color: #333333 !important;
+            font-size: 0.9rem !important;
+        }
+        .booking-card .statut {
+            color: #1a1a2e !important;
+            font-size: 0.95rem !important;
+            font-weight: 700;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
     tab1, tab2 = st.tabs(["🔒 Lockers", "📋 Mes Commandes"])
 
-    # ── TAB 1 : Lockers ───────────────────────────────────────────────────
     with tab1:
         _show_lockers()
 
-    # ── TAB 2 : Historique commandes ──────────────────────────────────────
     with tab2:
         _show_user_bookings()
 
@@ -58,7 +116,7 @@ def _show_lockers():
                         <div class="locker-available">
                             <h3>🟢 {locker.get('nom', lid)}</h3>
                             <p>📍 {locker.get('position', '—')}</p>
-                            <p style="font-size:0.85rem;color:#155724;">✅ Disponible</p>
+                            <p style="font-size:0.85rem;color:#155724;font-weight:700;">✅ Disponible</p>
                         </div>
                     """, unsafe_allow_html=True)
                     if st.button(f"📦 Réserver", key=f"book_{lid}"):
@@ -69,15 +127,13 @@ def _show_lockers():
                         <div class="locker-reserved">
                             <h3>🔴 {locker.get('nom', lid)}</h3>
                             <p>📍 {locker.get('position', '—')}</p>
-                            <p style="font-size:0.85rem;color:#721c24;">🔒 Réservé</p>
+                            <p style="font-size:0.85rem;color:#721c24;font-weight:700;">🔒 Réservé</p>
                         </div>
                     """, unsafe_allow_html=True)
 
-    # Formulaire de réservation
     if st.session_state.selected_locker:
         _show_booking_form()
 
-    # QR Code après réservation
     if st.session_state.booking_success:
         _show_booking_confirmation()
 
@@ -141,7 +197,12 @@ def _show_booking_confirmation():
             if QR_AVAILABLE:
                 qr_b64 = generate_qr_code(qr_data)
                 st.markdown("### 📱 Votre QR Code")
-                st.markdown(f'<img src="data:image/png;base64,{qr_b64}" width="220"/>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div style="text-align:center;">'
+                    f'<img src="data:image/png;base64,{qr_b64}" width="220"/>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
                 st.caption("Montrez ce QR code à votre agent courrier.")
             else:
                 st.info("📋 Détails de votre commande :")
@@ -166,18 +227,44 @@ def _show_user_bookings():
         st.info("Vous n'avez pas encore de commande.")
     else:
         statut_colors = {
-            "en_attente": "🟡",
-            "en_cours": "🔵",
-            "livré": "🟢",
-            "annulé": "🔴"
+            "en_attente": ("🟡", "#856404", "#fff3cd"),
+            "en_cours":   ("🔵", "#004085", "#cce5ff"),
+            "livré":      ("🟢", "#155724", "#d4edda"),
+            "annulé":     ("🔴", "#721c24", "#f8d7da"),
         }
         st.markdown(f"**{len(bookings)} commande(s) au total**")
+
         for b in sorted(bookings, key=lambda x: x.get("timestamp", ""), reverse=True):
-            icon = statut_colors.get(b.get("statut", ""), "⚪")
+            statut = b.get("statut", "")
+            icon, text_color, bg_color = statut_colors.get(statut, ("⚪", "#333", "#f8f9fa"))
+
             st.markdown(f"""
-                <div class="booking-card">
-                    <b>#{b.get('booking_id','—')} — {b.get('produit','—')}</b><br>
-                    <small>🔒 {b.get('locker_name','—')} &nbsp;|&nbsp; 📅 {b.get('timestamp','—')}</small><br>
-                    <small>{icon} Statut : <b>{b.get('statut','—')}</b></small>
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    padding: 1.2rem;
+                    margin: 0.8rem 0;
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+                    border-left: 5px solid #2196F3;
+                ">
+                    <p style="font-size:1.05rem;font-weight:800;color:#1a1a2e;margin:0 0 0.5rem 0;">
+                        📦 #{b.get('booking_id','—')} — {b.get('produit','—')}
+                    </p>
+                    <p style="font-size:0.95rem;color:#333333;margin:0.2rem 0;">
+                        🔒 <b>{b.get('locker_name','—')}</b>
+                    </p>
+                    <p style="font-size:0.95rem;color:#333333;margin:0.2rem 0;">
+                        📅 {b.get('timestamp','—')}
+                    </p>
+                    <p style="margin:0.5rem 0 0 0;">
+                        <span style="
+                            background:{bg_color};
+                            color:{text_color};
+                            padding:0.3rem 0.8rem;
+                            border-radius:20px;
+                            font-weight:700;
+                            font-size:0.95rem;
+                        ">{icon} {statut}</span>
+                    </p>
                 </div>
             """, unsafe_allow_html=True)
