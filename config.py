@@ -17,3 +17,9 @@ firebaseConfig = {
 firebase = pyrebase.initialize_app(firebaseConfig)
 auth = firebase.auth()
 db = firebase.database()
+
+# ============================================================
+# CONFIGURATION GMAIL DROPLOCK
+# ============================================================
+GMAIL_SENDER   = "droplock.app@gmail.com"
+GMAIL_APP_PASS = "vtkf lbgq wkwi crnh"
